@@ -55,7 +55,8 @@
                         <h3>Bulk JSON Input</h3>
                         <textarea id="jsonInput" placeholder='{"strategy": "Smart Balance", "tasks": [...]}'></textarea>
                         <div class="json-actions">
-                            <button type="button" id="loadJsonBtn">Load JSON</button>
+                            <button type="button" id="loadJsonBtn">Merge Tasks</button>
+                            <button type="button" id="replaceJsonBtn">Replace All</button>
                             <button type="button" id="exportJsonBtn">Export JSON</button>
                         </div>
                     </div>
@@ -77,7 +78,7 @@
                 <div class="right-panel">
                     <div class="results-header">
                         <h2>Analysis Results</h2>
-                        <span id="taskCount">0 tasks loaded</span>
+                        <span id="taskCount" class="task-count">0 tasks loaded</span>
                     </div>
                     <div id="loading" class="loading hidden">
                         <div class="spinner"></div>

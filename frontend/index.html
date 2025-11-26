@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Task Analyzer</h1>
+        <div class="main-content">
+            <div class="input-section">
+                <h2>Input Tasks</h2>
+                <div class="form-section">
+                    <h3>Single Task Form</h3>
+                    <form id="taskForm">
+                        <input type="text" id="taskId" placeholder="Task ID" required>
+                        <input type="text" id="taskTitle" placeholder="Title" required>
+                        <input type="date" id="taskDueDate" placeholder="Due Date">
+                        <input type="number" id="taskHours" placeholder="Estimated Hours" min="0" step="0.1">
+                        <input type="number" id="taskImportance" placeholder="Importance (1-10)" min="1" max="10">
+                        <input type="text" id="taskDependencies" placeholder="Dependencies (comma-separated IDs)">
+                        <button type="submit">Add Task</button>
+                    </form>
+                </div>
+                
+                <div class="bulk-section">
+                    <h3>Bulk JSON Input</h3>
+                    <textarea id="jsonInput" placeholder='{"strategy": "Smart Balance", "tasks": [...]}'></textarea>
+                </div>
+                
+                <div class="strategy-section">
+                    <label for="strategy">Strategy:</label>
+                    <select id="strategy">
+                        <option value="Smart Balance">Smart Balance</option>
+                        <option value="Fastest Wins">Fastest Wins</option>
+                        <option value="High Impact">High Impact</option>
+                        <option value="Deadline Driven">Deadline Driven</option>
+                    </select>
+                </div>
+                
+                <button id="analyzeBtn">Analyze Tasks</button>
+                <button id="suggestBtn">Get Suggestions</button>
+            </div>
+            
+            <div class="results-section">
+                <h2>Results</h2>
+                <div id="loading" class="loading hidden">Analyzing...</div>
+                <div id="results"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -82,6 +82,9 @@ def detect_cycles(tasks: List[Dict]) -> Set[str]:
 
 def compute_scores(tasks: List[Dict], strategy: str = "Smart Balance") -> List[Dict]:
     """Compute scores for all tasks based on strategy."""
+    if not tasks:
+        return []
+    
     # Strategy weights
     strategies = {
         "Smart Balance": {"w_u": 0.35, "w_i": 0.30, "w_e": 0.20, "w_d": 0.15},
@@ -92,14 +95,12 @@ def compute_scores(tasks: List[Dict], strategy: str = "Smart Balance") -> List[D
     
     weights = strategies.get(strategy, strategies["Smart Balance"])
     
-    # Detect cycles
+    # Detect cycles once for all tasks
     cycle_nodes = detect_cycles(tasks)
     
-    # Calculate dependency counts (how many tasks each task blocks)
-    dependency_counts = {}
-    for task in tasks:
-        task_id = task.get('id', '')
-        dependency_counts[task_id] = 0
+    # Pre-calculate dependency counts for better performance
+    task_ids = {task.get('id', '') for task in tasks}
+    dependency_counts = {task_id: 0 for task_id in task_ids}
     
     for task in tasks:
         for dep_id in task.get('dependencies', []):
@@ -114,7 +115,7 @@ def compute_scores(tasks: List[Dict], strategy: str = "Smart Balance") -> List[D
         task_id = task.get('id', '')
         title = task.get('title', '')
         
-        # Handle missing or invalid fields
+        # Handle missing or invalid fields with optimized parsing
         due_date = task.get('due_date')
         days_left = None
         if due_date:
@@ -122,7 +123,7 @@ def compute_scores(tasks: List[Dict], strategy: str = "Smart Balance") -> List[D
                 if isinstance(due_date, str):
                     due_date = date.fromisoformat(due_date)
                 days_left = (due_date - today).days
-            except:
+            except (ValueError, TypeError):
                 due_date = None
         
         estimated_hours = task.get('estimated_hours')
@@ -195,16 +196,13 @@ def compute_scores(tasks: List[Dict], strategy: str = "Smart Balance") -> List[D
         
         scored_tasks.append(scored_task)
     
-    # Sort by score (desc), then tie-breakers
-    def sort_key(task):
-        return (
-            -task['score'],  # Higher score first
-            -task['importance'],  # Higher importance first
-            task['due_date'] if task['due_date'] else date.max,  # Earlier due date first
-            task['estimated_hours'],  # Lower hours first
-            task['id']  # Stable sort by id
-        )
-    
-    scored_tasks.sort(key=sort_key)
+    # Optimized sorting with stable sort
+    scored_tasks.sort(key=lambda task: (
+        -task['score'],  # Higher score first
+        -task['importance'],  # Higher importance first
+        task['due_date'] if task['due_date'] else date.max,  # Earlier due date first
+        task['estimated_hours'],  # Lower hours first
+        task['id']  # Stable sort by id
+    ))
     
     return scored_tasks

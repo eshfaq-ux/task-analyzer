@@ -42,28 +42,36 @@ def detect_cycles(tasks: List[Dict]) -> Set[str]:
         task_ids.add(task_id)
         graph[task_id] = task.get('dependencies', [])
     
-    # DFS cycle detection
+    # DFS cycle detection with proper cycle collection
     WHITE, GRAY, BLACK = 0, 1, 2
     colors = {task_id: WHITE for task_id in task_ids}
     cycle_nodes = set()
+    current_path = []
     
     def dfs(node):
         if colors[node] == GRAY:  # Back edge found - cycle detected
+            # Add all nodes in current path from this node onwards to cycle_nodes
+            cycle_start_idx = current_path.index(node)
+            for i in range(cycle_start_idx, len(current_path)):
+                cycle_nodes.add(current_path[i])
+            cycle_nodes.add(node)
             return True
+        
         if colors[node] == BLACK:  # Already processed
             return False
             
         colors[node] = GRAY
+        current_path.append(node)
         
+        cycle_found = False
         for neighbor in graph.get(node, []):
             if neighbor in task_ids:  # Only check dependencies that exist in our task set
                 if dfs(neighbor):
-                    cycle_nodes.add(node)
-                    cycle_nodes.add(neighbor)
-                    return True
+                    cycle_found = True
         
+        current_path.pop()
         colors[node] = BLACK
-        return False
+        return cycle_found
     
     for task_id in task_ids:
         if colors[task_id] == WHITE:

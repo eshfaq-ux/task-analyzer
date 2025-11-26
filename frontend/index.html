@@ -7,63 +7,166 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Header Navigation -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="app-title">📊 Smart Task Analyzer</h1>
+            <nav class="header-nav">
+                <button class="nav-btn active" data-view="analyzer">Task Analyzer</button>
+                <button class="nav-btn" data-view="manager">Task Manager</button>
+                <button class="nav-btn" data-view="matrix">Eisenhower Matrix</button>
+            </nav>
+        </div>
+    </header>
+
     <div class="container">
-        <div class="left-panel">
-            <h1>Smart Task Analyzer</h1>
-            
-            <div class="card">
-                <h3>Add Task</h3>
-                <form id="taskForm">
-                    <input type="text" id="taskId" placeholder="Task ID" required>
-                    <input type="text" id="taskTitle" placeholder="Title" required>
-                    <input type="date" id="taskDueDate">
-                    <input type="number" id="taskHours" placeholder="Estimated Hours" min="0" step="0.1">
-                    <select id="taskImportance">
-                        <option value="">Select Importance</option>
-                        <option value="1">1 - Lowest</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5 - Medium</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10 - Highest</option>
-                    </select>
-                    <input type="text" id="taskDependencies" placeholder="Dependencies (comma-separated)">
-                    <button type="submit" class="btn">Add Task</button>
-                </form>
-            </div>
+        <!-- Task Analyzer View (Original Layout) -->
+        <div id="analyzer-view" class="view-content active">
+            <div class="main-content">
+                <div class="left-panel">
+                    <div class="card">
+                        <h3>Add Task</h3>
+                        <form id="taskForm">
+                            <input type="text" id="taskId" placeholder="Task ID" required>
+                            <input type="text" id="taskTitle" placeholder="Task title" required>
+                            <input type="date" id="taskDueDate">
+                            <input type="number" id="taskHours" placeholder="Estimated Hours" min="0" step="0.1">
+                            <select id="taskImportance">
+                                <option value="">Select Importance</option>
+                                <option value="1">1 - Lowest</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5 - Medium</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10 - Highest</option>
+                            </select>
+                            <input type="text" id="taskDependencies" placeholder="Dependencies (comma-separated)">
+                            <button type="submit" id="addTaskBtn">Add Task</button>
+                            <button type="button" id="updateTaskBtn" class="hidden">Update Task</button>
+                            <button type="button" id="cancelEditBtn" class="hidden">Cancel</button>
+                        </form>
+                    </div>
 
-            <div class="card">
-                <h3>Bulk JSON Input</h3>
-                <textarea id="jsonInput" placeholder='{"strategy": "Smart Balance", "tasks": [...]}'></textarea>
-                <button type="button" id="loadJsonBtn" class="btn">Load JSON</button>
-            </div>
+                    <div class="card">
+                        <h3>Bulk JSON Input</h3>
+                        <textarea id="jsonInput" placeholder='{"strategy": "Smart Balance", "tasks": [...]}'></textarea>
+                        <div class="json-actions">
+                            <button type="button" id="loadJsonBtn">Load JSON</button>
+                            <button type="button" id="exportJsonBtn">Export JSON</button>
+                        </div>
+                    </div>
 
-            <div class="card">
-                <h3>Strategy</h3>
-                <select id="strategy">
-                    <option value="Smart Balance">Smart Balance</option>
-                    <option value="Fastest Wins">Fastest Wins</option>
-                    <option value="High Impact">High Impact</option>
-                    <option value="Deadline Driven">Deadline Driven</option>
-                </select>
-            </div>
+                    <div class="card">
+                        <h3>Strategy</h3>
+                        <select id="strategy">
+                            <option value="Smart Balance">Smart Balance</option>
+                            <option value="Fastest Wins">Fastest Wins</option>
+                            <option value="High Impact">High Impact</option>
+                            <option value="Deadline Driven">Deadline Driven</option>
+                        </select>
+                    </div>
 
-            <button id="analyzeBtn" class="btn btn-primary">Analyze Tasks</button>
+                    <button id="analyzeBtn" class="btn-primary">Analyze Tasks</button>
+                    <button id="suggestBtn" class="btn-secondary">Get Suggestions</button>
+                </div>
+
+                <div class="right-panel">
+                    <div class="results-header">
+                        <h2>Analysis Results</h2>
+                        <span id="taskCount">0 tasks loaded</span>
+                    </div>
+                    <div id="loading" class="loading hidden">
+                        <div class="spinner"></div>
+                        <p>Processing your tasks...</p>
+                    </div>
+                    <div id="error" class="error hidden"></div>
+                    <div id="results">
+                        <div class="empty-state">
+                            <div class="empty-icon">📊</div>
+                            <h3>Ready to analyze</h3>
+                            <p>Add tasks and click "Analyze Tasks" to see prioritized results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="right-panel">
-            <div class="results-header">
-                <h2>Analysis Results</h2>
-                <button id="suggestBtn" class="btn">Suggest Top 3 Tasks</button>
+        <!-- Task Manager View -->
+        <div id="manager-view" class="view-content">
+            <div class="manager-content">
+                <div class="manager-header">
+                    <h2>Task Management</h2>
+                    <div class="manager-actions">
+                        <button id="clearAllBtn" class="btn-danger">Clear All Tasks</button>
+                    </div>
+                </div>
+                <div id="taskList" class="task-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <h3>No tasks yet</h3>
+                        <p>Add tasks using the Task Analyzer to manage them here</p>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Eisenhower Matrix View -->
+    <div id="matrix-view" class="view-content">
+        <div class="matrix-container">
+            <h2 style="text-align: center; margin-bottom: 30px;">📊 Eisenhower Matrix</h2>
+            <p style="text-align: center; color: #94a3b8; margin-bottom: 30px;">Tasks organized by Urgency vs Importance</p>
             
-            <div id="loading" class="loading hidden">Analyzing tasks...</div>
-            <div id="error" class="error hidden"></div>
-            <div id="results"></div>
+            <div class="eisenhower-grid">
+                <!-- Quadrant 1: Urgent & Important -->
+                <div class="quadrant q1">
+                    <h3>🔴 Do First</h3>
+                    <p class="quadrant-desc">Urgent & Important</p>
+                    <div id="q1-tasks" class="quadrant-tasks"></div>
+                </div>
+                
+                <!-- Quadrant 2: Not Urgent & Important -->
+                <div class="quadrant q2">
+                    <h3>🟡 Schedule</h3>
+                    <p class="quadrant-desc">Not Urgent & Important</p>
+                    <div id="q2-tasks" class="quadrant-tasks"></div>
+                </div>
+                
+                <!-- Quadrant 3: Urgent & Not Important -->
+                <div class="quadrant q3">
+                    <h3>🟠 Delegate</h3>
+                    <p class="quadrant-desc">Urgent & Not Important</p>
+                    <div id="q3-tasks" class="quadrant-tasks"></div>
+                </div>
+                
+                <!-- Quadrant 4: Not Urgent & Not Important -->
+                <div class="quadrant q4">
+                    <h3>🟢 Eliminate</h3>
+                    <p class="quadrant-desc">Not Urgent & Not Important</p>
+                    <div id="q4-tasks" class="quadrant-tasks"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete this task?</p>
+            <div class="task-preview">
+                <strong id="deleteTaskTitle"></strong>
+                <span id="deleteTaskId"></span>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmDeleteBtn" class="btn-danger">Delete</button>
+                <button id="cancelDeleteBtn" class="btn-secondary">Cancel</button>
+            </div>
         </div>
     </div>
 

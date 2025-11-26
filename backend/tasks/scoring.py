@@ -172,12 +172,12 @@ def compute_scores(tasks: List[Dict], strategy: str = "Smart Balance") -> List[D
             else:
                 urgency_text = f"due in {days_left} days"
         
-        effort_label = "Low" if estimated_hours <= 2 else "Medium" if estimated_hours <= 5 else "High"
+        effort_label = "Quick win (≤2h)" if estimated_hours <= 2 else "Moderate effort (3-5h)" if estimated_hours <= 5 else "High effort (6+h)"
         
         blocks_count = dependency_counts.get(task_id, 0)
-        dependency_text = f"blocks {blocks_count} tasks" if blocks_count > 0 else "blocks no tasks"
+        dependency_text = f"blocks {blocks_count} task{'s' if blocks_count != 1 else ''}" if blocks_count > 0 else "no blockers"
         
-        explanation = f"{urgency_text}; importance {importance}/10; {effort_label} effort; {dependency_text}"
+        explanation = f"{urgency_text}; importance {importance}/10; {effort_label}; {dependency_text}"
         if in_cycle:
             explanation += "; circular dependency detected"
         

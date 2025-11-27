@@ -6,6 +6,7 @@ let editingTaskId = null;
 const taskForm = document.getElementById('taskForm');
 const jsonInput = document.getElementById('jsonInput');
 const loadJsonBtn = document.getElementById('loadJsonBtn');
+const replaceJsonBtn = document.getElementById('replaceJsonBtn');
 const exportJsonBtn = document.getElementById('exportJsonBtn');
 const strategySelect = document.getElementById('strategy');
 const analyzeBtn = document.getElementById('analyzeBtn');
@@ -255,7 +256,7 @@ clearAllBtn.addEventListener('click', async () => {
     }
 });
 
-// JSON operations
+// JSON operations - Merge tasks
 loadJsonBtn.addEventListener('click', async () => {
     const jsonText = jsonInput.value.trim();
     if (!jsonText) {
@@ -266,6 +267,53 @@ loadJsonBtn.addEventListener('click', async () => {
     try {
         const data = JSON.parse(jsonText);
         if (data.tasks && Array.isArray(data.tasks)) {
+            // Merge: Add new tasks, skip duplicates
+            let addedCount = 0;
+            data.tasks.forEach(newTask => {
+                if (!tasks.find(t => t.id === newTask.id)) {
+                    tasks.push(newTask);
+                    addedCount++;
+                }
+            });
+            
+            if (data.strategy) {
+                strategySelect.value = data.strategy;
+            }
+            updateTaskList();
+            updateTaskCount();
+            await saveTasks();
+            hideError();
+            jsonInput.value = '';
+            showSuccessMessage(`Merged ${addedCount} new tasks! (${data.tasks.length - addedCount} duplicates skipped)`);
+        } else {
+            showError('JSON must contain a "tasks" array');
+        }
+    } catch (e) {
+        showError('Invalid JSON format');
+    }
+});
+
+// JSON operations - Replace all tasks
+replaceJsonBtn.addEventListener('click', async () => {
+    const jsonText = jsonInput.value.trim();
+    if (!jsonText) {
+        showError('Please enter JSON data');
+        return;
+    }
+    
+    if (tasks.length > 0 && !confirm(`Replace all ${tasks.length} existing tasks?`)) {
+        return;
+    }
+    
+    try {
+        const data = JSON.parse(jsonText);
+        if (data.tasks && Array.isArray(data.tasks)) {
+            // Delete all existing tasks from DB
+            for (const task of tasks) {
+                await deleteTaskFromDB(task.id);
+            }
+            
+            // Replace with new tasks
             tasks = data.tasks;
             if (data.strategy) {
                 strategySelect.value = data.strategy;
@@ -275,7 +323,7 @@ loadJsonBtn.addEventListener('click', async () => {
             await saveTasks();
             hideError();
             jsonInput.value = '';
-            showSuccessMessage(`Loaded ${data.tasks.length} tasks from JSON!`);
+            showSuccessMessage(`Replaced with ${data.tasks.length} tasks!`);
         } else {
             showError('JSON must contain a "tasks" array');
         }
@@ -346,7 +394,7 @@ function updateTaskCount() {
     taskCount.textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''} loaded`;
 }
 
-// API calls and display functions (keeping original functionality)
+// API calls and display functions 
 analyzeBtn.addEventListener('click', async () => {
     if (tasks.length === 0) {
         showError('No tasks to analyze. Add tasks first.');
@@ -414,7 +462,7 @@ async function getSuggestions() {
     }
 }
 
-// Display functions (keeping original)
+// Display functions
 function displayResults(data) {
     const highCount = data.tasks.filter(t => t.priority === 'High').length;
     const mediumCount = data.tasks.filter(t => t.priority === 'Medium').length;
@@ -447,7 +495,7 @@ function displayResults(data) {
                     <div class="task-title">
                         <span class="priority-dot ${task.priority.toLowerCase()}"></span>
                         <div>
-                            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px;">🏆 RANK #${index + 1}</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px;">RANK #${index + 1}</div>
                             <div style="font-size: 1.1rem; font-weight: 600;">${task.title}</div>
                         </div>
                     </div>
@@ -460,25 +508,25 @@ function displayResults(data) {
                     </div>
                 </div>
                 
-                <div class="task-explanation" style="background: rgba(59, 130, 246, 0.05); padding: 16px; border-radius: 8px; margin-bottom: 16px; line-height: 1.8;">
+                <div class="task-explanation" style="padding: 16px; border-radius: 8px; margin-bottom: 16px; line-height: 1.8;">
                     <div style="font-weight: 600; color: #60a5fa; margin-bottom: 10px; font-size: 0.95rem;">💡 Reasoning</div>
                     <div style="color: #cbd5e1; font-size: 0.95rem;">${task.explanation.replace(/; /g, '<br>• ')}</div>
                 </div>
                 
                 <div class="task-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-                    <div class="task-detail" style="padding: 10px; background: rgba(100, 116, 139, 0.1); border-radius: 6px;">
+                    <div class="task-detail" style="padding: 10px; border-radius: 6px;">
                         <strong style="color: #94a3b8;">📅 Due:</strong> 
                         <span style="color: #e2e8f0; margin-left: 6px;">${formatDueDate(task.due_date)}</span>
                     </div>
-                    <div class="task-detail" style="padding: 10px; background: rgba(100, 116, 139, 0.1); border-radius: 6px;">
+                    <div class="task-detail" style="padding: 10px; border-radius: 6px;">
                         <strong style="color: #94a3b8;">⏱️ Hours:</strong> 
                         <span style="color: #e2e8f0; margin-left: 6px;">${task.estimated_hours || 'Not specified'}</span>
                     </div>
-                    <div class="task-detail" style="padding: 10px; background: rgba(100, 116, 139, 0.1); border-radius: 6px;">
+                    <div class="task-detail" style="padding: 10px; border-radius: 6px;">
                         <strong style="color: #94a3b8;">⭐ Impact:</strong> 
                         <span style="color: #e2e8f0; margin-left: 6px;">${task.importance || 'Not specified'}/10</span>
                     </div>
-                    <div class="task-detail" style="padding: 10px; background: rgba(100, 116, 139, 0.1); border-radius: 6px;">
+                    <div class="task-detail" style="padding: 10px; border-radius: 6px;">
                         <strong style="color: #94a3b8;">🔗 Dependencies:</strong> 
                         <span style="color: #e2e8f0; margin-left: 6px;">${task.dependencies.length > 0 ? task.dependencies.join(', ') : 'None'}</span>
                     </div>

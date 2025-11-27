@@ -11,7 +11,7 @@ This mini-application analyzes and ranks tasks using urgency, importance, effort
 - Circular dependency detection and penalty
 - Unit tests for scoring logic
 
-## Algorithm (350 words)
+## Algorithm 
 The scoring algorithm computes a base score by combining four normalized sub-scores: Urgency (U), Importance (I), Effort (E), and Dependency impact (D). Urgency maps days until due into a 0–1 range where tasks due sooner score higher and past-due tasks receive the maximum urgency. The urgency function uses a linear mapping where tasks due within 30 days receive proportionally higher scores, with past-due tasks getting the maximum score of 1.0. The 30-day window was chosen to balance sprint planning (2 weeks) and monthly cycles while preventing distant deadlines from dominating scores. Tasks without due dates receive a neutral score of 0.2.
 
 Importance is normalized from the user-provided 1–10 scale to 0–1 using the formula (importance-1)/9. Effort is inverted so that lower estimated hours yield higher scores to favor quick wins, using the formula max(0, min(1, (8-hours)/8)) where tasks requiring 8+ hours get zero effort score. The 8-hour threshold represents a typical workday and encourages breaking large tasks into smaller chunks. Dependency impact is calculated by counting how many other tasks are blocked by the given task and normalizing with a soft cap at 3 blocked tasks to prevent single bottleneck tasks from dominating the entire priority queue.

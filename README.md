@@ -61,8 +61,8 @@ python manage.py runserver
 
 ### Frontend Setup
 The frontend is served as static files by Django. Once the server is running, visit:
+- Frontend UI: http://127.0.0.1:8000/ (redirects to /static/index.html)
 - API endpoints: http://127.0.0.1:8000/api/tasks/analyze/ and http://127.0.0.1:8000/api/tasks/suggest/
-- Frontend UI: http://127.0.0.1:8000/static/index.html
 
 ## API Usage
 

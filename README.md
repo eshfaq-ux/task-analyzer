@@ -12,20 +12,25 @@ This mini-application analyzes and ranks tasks using urgency, importance, effort
 - Unit tests for scoring logic
 
 ## Algorithm (350 words)
-The scoring algorithm computes a base score by combining four normalized sub-scores: Urgency (U), Importance (I), Effort (E), and Dependency impact (D). Urgency maps days until due into a 0–1 range where tasks due sooner score higher and past-due tasks receive the maximum urgency. The urgency function uses a linear mapping where tasks due within 30 days receive proportionally higher scores, with past-due tasks getting the maximum score of 1.0. Tasks without due dates receive a neutral score of 0.2.
+The scoring algorithm computes a base score by combining four normalized sub-scores: Urgency (U), Importance (I), Effort (E), and Dependency impact (D). Urgency maps days until due into a 0–1 range where tasks due sooner score higher and past-due tasks receive the maximum urgency. The urgency function uses a linear mapping where tasks due within 30 days receive proportionally higher scores, with past-due tasks getting the maximum score of 1.0. The 30-day window was chosen to balance sprint planning (2 weeks) and monthly cycles while preventing distant deadlines from dominating scores. Tasks without due dates receive a neutral score of 0.2.
 
-Importance is normalized from the user-provided 1–10 scale to 0–1 using the formula (importance-1)/9. Effort is inverted so that lower estimated hours yield higher scores to favor quick wins, using the formula max(0, min(1, (8-hours)/8)) where tasks requiring 8+ hours get zero effort score. Dependency impact is calculated by counting how many other tasks are blocked by the given task and normalizing with a soft cap at 3 blocked tasks.
+Importance is normalized from the user-provided 1–10 scale to 0–1 using the formula (importance-1)/9. Effort is inverted so that lower estimated hours yield higher scores to favor quick wins, using the formula max(0, min(1, (8-hours)/8)) where tasks requiring 8+ hours get zero effort score. The 8-hour threshold represents a typical workday and encourages breaking large tasks into smaller chunks. Dependency impact is calculated by counting how many other tasks are blocked by the given task and normalizing with a soft cap at 3 blocked tasks to prevent single bottleneck tasks from dominating the entire priority queue.
 
 We combine these subscores using configurable weights (default: urgency 35%, importance 30%, effort 20%, dependency 15%) to obtain a base score in 0–1. If a task participates in a circular dependency, detected using depth-first search with white/gray/black coloring, it receives a 25% penalty on the base score to surface the issue rather than hide it. The final score is scaled to 0–100 and labeled High/Medium/Low using thresholds (>=75 high, 50–75 medium, <50 low).
 
 The algorithm is intentionally deterministic and modular: each subscore function is pure and easy to test. Strategy presets (Fastest Wins, High Impact, Deadline Driven) swap weights to change prioritization focus. Ties are resolved by importance (higher first), earlier due date, smaller estimated hours, and stable id ordering to ensure consistent results across runs.
 
 ## Validation & Edge Cases
-- Missing titles are included but flagged with score 0 and an explanation
-- Invalid dates are treated as missing due_date
+- Missing titles are handled gracefully (empty string accepted)
+- Invalid dates are treated as missing due_date (neutral urgency 0.2)
 - Missing or zero estimated_hours treated as 0.5 hours
-- Unknown dependency ids are noted and treated as external blockers
+- Negative estimated_hours treated as 0.5 hours
+- Unknown dependency ids are filtered out during cycle detection
 - Importance values are clamped to 1-10 range with default of 5
+- Out-of-range importance (e.g., 15) is clamped to 10
+- Empty task list returns empty result array
+- Circular dependencies detected via DFS and penalized by 25%
+- Past-due tasks receive maximum urgency score (1.0)
 
 ## Setup
 
@@ -102,7 +107,7 @@ pytest
 ## Design Decisions & Trade-offs
 
 ### Architecture Choices
-- **In-memory storage**: Used module-level variables instead of database for simplicity and assignment requirements
+- **Database persistence**: Django ORM with SQLite for task storage and analysis history
 - **Pure functions**: Scoring logic is separated into pure functions for easy testing and modularity
 - **DRF integration**: Used Django REST Framework for clean API structure and validation
 - **Static frontend**: Simple HTML/CSS/JS without frameworks to minimize complexity
@@ -116,6 +121,12 @@ pytest
 ### Validation Strategy
 - **Graceful degradation**: Invalid inputs are handled with safe defaults rather than errors
 - **Explicit explanations**: Each task includes human-readable explanation of its score
+
+### Performance & Limitations
+- **Time complexity**: O(V+E) for cycle detection, O(n log n) for sorting
+- **Recommended task limit**: <1000 tasks per analysis for optimal performance
+- **Database**: SQLite used for development; consider PostgreSQL for production with concurrent users
+- **No authentication**: Current implementation has no user isolation (by design for assignment scope)
 
 ## Future Improvements
 - **Dependency graph visualization**: Use cytoscape.js or D3.js for interactive dependency graphs
